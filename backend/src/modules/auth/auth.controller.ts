@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser } from './current-user.decorator';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { LocalLoginDto } from './dto/local-login.dto';
 import { RequireAuthGuard } from './require-auth.guard';
 import { AuthService } from './auth.service';
 import { UserResponse } from '../users/user.types';
@@ -12,6 +13,16 @@ export class AuthController {
   @Post('google')
   async googleAuth(@Body() payload: GoogleAuthDto) {
     return this.authService.signInWithGoogle(payload.idToken);
+  }
+
+  @Post('local-login')
+  async localLogin(@Body() payload: LocalLoginDto) {
+    return this.authService.signInLocal(payload.email);
+  }
+
+  @Get('mode')
+  getAuthMode() {
+    return this.authService.getAuthMode();
   }
 
   @Get('me')
@@ -26,4 +37,3 @@ export class AuthController {
     return { success: true };
   }
 }
-

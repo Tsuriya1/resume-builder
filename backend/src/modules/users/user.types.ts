@@ -1,5 +1,5 @@
 export type UserRecord = {
-  id: number;
+  id: number | string;
   google_id: string;
   email: string;
   full_name: string;
@@ -22,4 +22,3 @@ export type UserResponse = {
   ui_language: string;
   default_resume_language: string;
 };
-

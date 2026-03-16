@@ -1,179 +1,97 @@
-# MVP Implementation Plan
+# MVP Implementation Plan (Local-First)
 
 ## Goal
 
-Deliver an end-to-end Resume Builder MVP where a user can sign in with Google, manage master profile data, create and edit multiple resume versions, use templates and AI suggestions, preview in real time, and export to PDF/DOCX; plus a basic admin panel.
+Deliver a fully functional local MVP that runs end-to-end on a developer machine and is architecturally clean enough to evolve into production later.
+
+## Local-First Constraints
+
+- PostgreSQL runs locally via Docker.
+- Authentication supports `AUTH_MODE=local` and `AUTH_MODE=google`.
+- In local mode, login works with a seeded demo user.
+- Exports are synchronous and saved to local filesystem.
+- No cloud object storage, no production infrastructure work in MVP.
 
 ## Recommended Project Structure
 
 ```
 resume-builder/
+  frontend/
+  backend/
+    migrations/
+    scripts/
   docs/
-  frontend/                 # Next.js + TypeScript
-    src/
-      app/                  # routes and layouts
-      modules/              # feature modules (dashboard, editor, etc.)
-      components/           # shared UI
-      lib/                  # API client, i18n, utils
-      types/                # frontend models
-  backend/                  # NestJS + TypeScript
-    src/
-      modules/
-        auth/
-        users/
-        profiles/
-        resumes/
-        templates/
-        exports/
-        ai/
-        admin/
-        audit/
-      common/               # guards, filters, interceptors, validators
-      config/
-    prisma/ or migrations/  # schema + migration files
-  packages/
-    shared-types/           # DTO and enum contracts shared FE/BE
-    template-engine/        # render contracts and template runtime (optional in early MVP)
 ```
 
 ## Delivery Strategy
 
-Prioritize one thin vertical slice first, then widen feature coverage:
+1. Make auth/data foundations fully runnable locally.
+2. Deliver core resume flows end-to-end with one strong template path.
+3. Expand breadth (templates, admin insights, AI depth) after end-to-end stability.
 
-1. Auth + profile + one resume + one template + PDF export.
-2. Add missing sections, version operations, and DOCX.
-3. Add AI suggestions, bilingual robustness, and admin essentials.
+## Phase Plan
 
-## Phased Plan
+## Phase 1 - Foundations (Completed)
 
-## Phase 0 - Foundations (Week 1)
+- monorepo setup
+- frontend/backend scaffolds
+- env support
+- lint/format/typecheck
+- local Docker Postgres baseline
 
-Scope:
+## Phase 2 - Authentication + Migration Baseline (Current)
 
-- monorepo folders and base tooling
-- frontend and backend app scaffolds
-- PostgreSQL setup and first migrations
-- shared enums/contracts for language, direction, status, roles
-- centralized env config and secrets strategy
-- logging/error envelope conventions
-
-Exit criteria:
-
-- apps boot locally
-- health endpoints and DB connectivity work
-- CI runs lint + typecheck
-
-## Phase 1 - Auth + User + Preferences (Week 2)
-
-Scope:
-
-- Google OAuth flow (`/auth/google`, `/auth/me`, `/auth/logout`)
-- user provisioning on first login
-- role and preference persistence
-- protected routes (user/admin separation baseline)
+- `AUTH_MODE=local|google`
+- demo login for local mode
+- Google login compatibility route
+- JWT route protection + identity middleware
+- SQL migration runner
+- `users` migration + seed demo user
 
 Exit criteria:
 
-- first login creates `users` and `master_profiles`
-- authenticated user can read/update preferences
+- user can login locally and call protected `/auth/me`
+- DB schema is managed by migrations (not runtime table creation)
 
-## Phase 2 - Master Profile CRUD (Weeks 3-4)
+## Phase 3 - Master Profile Vertical Slice
 
-Scope:
+- profile migrations + APIs
+- frontend profile editor
+- autosave/validation basics
 
-- `/profile` read/update
-- CRUD APIs for profile sections and bullets
-- reorder support via `sort_order`
-- frontend master profile editor with validation + autosave
+## Phase 4 - Resume Versions + Editor Shell
 
-Exit criteria:
+- create/duplicate/archive resume versions
+- snapshot model
+- structure/editor/preview shell
 
-- user can fully populate profile sections included in MVP scope
-- data reload is stable and ordered
+## Phase 5 - Template + Preview Consistency
 
-## Phase 3 - Resume Versions + Editor Shell (Weeks 5-6)
+- template render contract
+- initial templates (LTR + RTL first)
+- live preview fidelity checks
 
-Scope:
+## Phase 6 - Local Exports
 
-- `/resumes` CRUD, duplicate, archive/restore, snapshot storage
-- section visibility/order config (`/resumes/:id/sections`)
-- 3-panel resume builder shell: structure, editor, preview
-- create-from-master and duplicate flows
+- synchronous PDF and DOCX generation
+- local file storage under `LOCAL_STORAGE_ROOT`
+- export status/download flow
 
-Exit criteria:
+## Phase 7 - AI Assistance
 
-- user can create multiple independent versions
-- edits in one version do not mutate others or master profile
+- rewrite/summary/translate/tailor endpoints
+- suggestion review-and-apply UX only
+- AI action logging
 
-## Phase 4 - Template System + Live Preview (Weeks 7-8)
+## Phase 8 - Admin MVP
 
-Scope:
+- users/templates/usage/audit screens + APIs
+- role-protected endpoints
 
-- template metadata APIs and seed templates (start with 3, expand to 5-8)
-- renderer contract for LTR/RTL templates
-- live preview bound to selected template and section config
-- design settings (controlled options only)
+## Tradeoffs
 
-Exit criteria:
-
-- template switch updates preview reliably
-- at least one strong LTR and one strong RTL template working end-to-end
-
-## Phase 5 - Export Pipeline (Weeks 9-10)
-
-Scope:
-
-- export records/status model
-- PDF export pipeline
-- DOCX export pipeline (native structured generation, not weak HTML conversion)
-- file storage integration
-- export dialog UX and download flow
-
-Exit criteria:
-
-- user exports both PDF and DOCX from resume version
-- status and failure paths are visible in UI
-
-## Phase 6 - AI Assistance + Job Tailoring (Weeks 11-12)
-
-Scope:
-
-- AI endpoints for rewrite field/section, summary, translate, tailor-to-job
-- suggestion-first UX (manual apply only)
-- AI action logging (`accepted`, action type, scope)
-- fallback/retry behavior on failures
-
-Exit criteria:
-
-- AI suggestions are non-destructive and reviewable
-- logs support basic usage analytics
-
-## Phase 7 - Admin MVP + Hardening (Weeks 13-14)
-
-Scope:
-
-- admin auth guard and screens: users, stats, template toggles, AI usage, audit logs
-- audit logging for admin actions
-- permission tests (user data isolation + admin restrictions)
-- performance and reliability pass for editor, preview, export
-
-Exit criteria:
-
-- admin can view operational stats and manage templates
-- security and core regression tests pass
-
-## Cross-Phase Quality Gates
-
-- API contract parity with `docs/api-contracts.md`
-- schema-to-API validation with explicit enum constraints
-- RTL/LTR checks for preview and export in every template addition
-- observability for export and AI failures before release
-
-## Explicit Deferrals (Post-MVP)
-
-- LinkedIn/file import
-- collaborative editing
-- public share links
-- billing/subscription
-- template marketplace/builder
+- Local auth mode speeds development and testing but is not production-auth security.
+- Synchronous exports keep implementation simple; may need async queue later.
+- Local file storage avoids cloud complexity but requires migration path to object storage later.
+- Real migrations are added early to avoid schema drift and painful refactors later.
 

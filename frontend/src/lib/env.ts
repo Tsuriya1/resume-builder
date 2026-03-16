@@ -1,18 +1,16 @@
-const requiredPublicVariables = ['NEXT_PUBLIC_APP_URL', 'NEXT_PUBLIC_API_URL'] as const;
-
-type PublicEnv = Record<(typeof requiredPublicVariables)[number], string>;
+type PublicEnv = {
+  NEXT_PUBLIC_APP_URL: string;
+  NEXT_PUBLIC_API_URL: string;
+};
 
 function getPublicEnv(): PublicEnv {
-  const missing = requiredPublicVariables.filter((name) => !process.env[name]);
-  if (missing.length > 0) {
-    throw new Error(`Missing required frontend environment variable(s): ${missing.join(', ')}`);
-  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
   return {
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL as string,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL as string,
+    NEXT_PUBLIC_APP_URL: appUrl,
+    NEXT_PUBLIC_API_URL: apiUrl,
   };
 }
 
 export const publicEnv = getPublicEnv();
-

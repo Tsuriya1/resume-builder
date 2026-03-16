@@ -1,7 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client } from 'google-auth-library';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { UsersService } from '../users/users.service';
 import { UserResponse } from '../users/user.types';
 
@@ -32,15 +32,21 @@ function isAuthTokenPayload(value: unknown): value is AuthTokenPayload {
 @Injectable()
 export class AuthService {
   private readonly oauthClient: OAuth2Client;
+  private readonly authMode: 'local' | 'google';
 
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {
     this.oauthClient = new OAuth2Client(this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID'));
+    this.authMode = this.configService.get<'local' | 'google'>('AUTH_MODE', 'local');
   }
 
   async signInWithGoogle(idToken: string): Promise<AuthSuccessResponse> {
+    if (this.authMode !== 'google') {
+      throw new BadRequestException('Google login is disabled. Set AUTH_MODE=google.');
+    }
+
     const ticket = await this.oauthClient.verifyIdToken({
       idToken,
       audience: this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID'),
@@ -59,6 +65,30 @@ export class AuthService {
     });
 
     const responseUser = this.usersService.toResponse(user);
+    return this.issueToken(responseUser);
+  }
+
+  async signInLocal(email?: string): Promise<AuthSuccessResponse> {
+    if (this.authMode !== 'local') {
+      throw new BadRequestException('Local login is disabled. Set AUTH_MODE=local.');
+    }
+
+    const targetEmail = email ?? this.configService.getOrThrow<string>('LOCAL_DEMO_EMAIL');
+    const user = await this.usersService.findByEmail(targetEmail);
+    if (!user) {
+      throw new UnauthorizedException(
+        `Demo user not found for ${targetEmail}. Run database migrations first.`,
+      );
+    }
+
+    return this.issueToken(this.usersService.toResponse(user));
+  }
+
+  getAuthMode() {
+    return { auth_mode: this.authMode };
+  }
+
+  private issueToken(responseUser: UserResponse): AuthSuccessResponse {
     const accessToken = jwt.sign(
       {
         sub: responseUser.id,

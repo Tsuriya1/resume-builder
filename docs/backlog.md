@@ -1,6 +1,12 @@
-# Implementation Backlog
+# Implementation Backlog (Local-First MVP)
 
-## Phase 1 – Project Setup
+## Priority Rules
+
+1. Everything must run locally on a developer machine.
+2. End-to-end core user flows before production hardening.
+3. Prefer simple local implementations that preserve clean upgrade paths.
+
+## Phase 1 - Project Setup (Completed)
 
 - create monorepo structure
 - setup frontend (Next.js + TypeScript)
@@ -10,48 +16,60 @@
 - add ESLint and Prettier
 - add Docker support
 
-## Phase 2 – Authentication
+## Phase 2 - Authentication (In Progress)
 
-- implement Google OAuth
-- create user table
-- create auth middleware
+- support `AUTH_MODE=local` and `AUTH_MODE=google`
+- implement local demo login flow
+- keep Google login route for compatibility
+- create `users` table using real SQL migrations
+- seed demo user for local mode
+- implement auth middleware + route protection
+- frontend auth bootstrap (store/use token, me/logout flow)
 
-## Phase 3 – Master Profile
+## Phase 3 - Master Profile
 
-- CRUD endpoints
+- profile schema migrations
+- profile CRUD endpoints
 - frontend profile editor
 
-## Phase 4 – Resume Versions
+## Phase 4 - Resume Versions + Editor Shell
 
-- create resume version
-- duplicate version
-- edit resume
-- store snapshot
+- create/duplicate/archive resume versions
+- snapshot storage strategy
+- resume editor shell (structure + editor + preview layout)
 
-## Phase 5 – Resume Editor UI
+## Phase 5 - Templates
 
-- section panel
-- content editor
-- preview panel
+- template metadata and renderer contract
+- local template assets
+- add initial 3 templates first, then expand to 5-8
 
-## Phase 6 – Templates
+## Phase 6 - Local Export Pipeline
 
-- implement template rendering
-- add 5 default templates
+- synchronous PDF export
+- synchronous DOCX export
+- store files on local filesystem (`LOCAL_STORAGE_ROOT`)
+- export status and download endpoints
 
-## Phase 7 – Export
+## Phase 7 - AI Integration
 
-- PDF export
-- DOCX export
+- rewrite field/section
+- summary generation
+- job-tailoring suggestions
+- translation (en/he)
+- suggestion approval flow and logging
 
-## Phase 8 – AI Integration
-
-- rewrite text
-- improve bullets
-- tailor resume to job description
-
-## Phase 9 – Admin Panel
+## Phase 8 - Admin Panel
 
 - user management
 - template management
 - usage statistics
+- audit logs
+
+## Out of Scope for Local MVP
+
+- production deployment infrastructure
+- cloud object storage
+- billing/subscriptions
+- advanced scaling and async job orchestration
+
